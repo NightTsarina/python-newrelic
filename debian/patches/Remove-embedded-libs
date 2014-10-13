@@ -1,0 +1,362 @@
+Index: python-newrelic/setup.py
+===================================================================
+--- python-newrelic.orig/setup.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/setup.py	2014-10-13 14:56:23.063939862 +0000
+@@ -83,14 +83,6 @@
+   "newrelic.hooks",
+   "newrelic.hooks.framework_tornado",
+   "newrelic.network",
+-  "newrelic/packages",
+-  "newrelic/packages/requests",
+-  "newrelic/packages/requests/packages",
+-  "newrelic/packages/requests/packages/charade",
+-  "newrelic/packages/requests/packages/urllib3",
+-  "newrelic/packages/requests/packages/urllib3/packages",
+-  "newrelic/packages/requests/packages/urllib3/packages/ssl_match_hostname",
+-  "newrelic/packages/wrapt",
+   "newrelic.samplers",
+ ]
+ 
+@@ -103,9 +95,7 @@
+   license = copyright,
+   url = "http://www.newrelic.com",
+   packages = packages,
+-  package_data = { 'newrelic': ['newrelic.ini', 'LICENSE',
+-          'packages/requests/LICENSE', 'packages/requests/NOTICE',
+-          'packages/requests/cacert.pem'] },
++  package_data = { 'newrelic': ['newrelic.ini'] },
+   extra_path = ( "newrelic", "newrelic-%s" % package_version ),
+   scripts = [ 'scripts/newrelic-admin' ],
+ )
+@@ -125,8 +115,6 @@
+                 monotonic_libraries = ['rt']
+ 
+             kwargs_tmp['ext_modules'] = [
+-                    Extension("newrelic.packages.wrapt._wrappers",
+-                        ["newrelic/packages/wrapt/_wrappers.c"]),
+                     Extension("newrelic.common._monotonic",
+                         ["newrelic/common/_monotonic.c"],
+                         libraries=monotonic_libraries),
+Index: python-newrelic/newrelic/api/application.py
+===================================================================
+--- python-newrelic.orig/newrelic/api/application.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/api/application.py	2014-10-13 14:53:58.039908870 +0000
+@@ -4,7 +4,7 @@
+ import newrelic.core.config
+ import newrelic.core.agent
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ class Application(object):
+ 
+Index: python-newrelic/newrelic/api/transaction.py
+===================================================================
+--- python-newrelic.orig/newrelic/api/transaction.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/api/transaction.py	2014-10-13 14:53:58.043908871 +0000
+@@ -16,7 +16,7 @@
+ 
+ from collections import deque
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ import newrelic.core.transaction_node
+ import newrelic.core.database_node
+Index: python-newrelic/newrelic/core/agent.py
+===================================================================
+--- python-newrelic.orig/newrelic/core/agent.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/core/agent.py	2014-10-13 14:53:58.043908871 +0000
+@@ -16,7 +16,7 @@
+ import newrelic.core.config
+ import newrelic.core.application
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ from ..common.log_file import initialize_logging
+ from ..samplers.cpu_usage import cpu_usage_data_source
+Index: python-newrelic/newrelic/core/application.py
+===================================================================
+--- python-newrelic.orig/newrelic/core/application.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/core/application.py	2014-10-13 14:53:58.043908871 +0000
+@@ -12,7 +12,7 @@
+ 
+ from functools import partial
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ from newrelic.samplers.data_sampler import DataSampler
+ 
+Index: python-newrelic/newrelic/core/data_collector.py
+===================================================================
+--- python-newrelic.orig/newrelic/core/data_collector.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/core/data_collector.py	2014-10-13 14:53:58.043908871 +0000
+@@ -14,11 +14,11 @@
+ 
+ from pprint import pprint
+ 
+-import newrelic.packages.six as six
++import six
+ 
+-import newrelic.packages.requests as requests
++import requests
+ 
+-from newrelic.packages.requests import certs
++from requests import certs
+ 
+ from newrelic import version
+ from newrelic.common.encoding_utils import unpack_field
+@@ -103,7 +103,7 @@
+ # customers over without outright breaking their existing configurations.
+ 
+ @patch_function_wrapper(
+-        'newrelic.packages.requests.packages.urllib3.connectionpool',
++        'urllib3.connectionpool',
+         'HTTPSConnectionPool._prepare_conn')
+ def _requests_proxy_scheme_workaround(wrapped, instance, args, kwargs):
+     def _params(connection, *args, **kwargs):
+Index: python-newrelic/newrelic/core/profile_sessions.py
+===================================================================
+--- python-newrelic.orig/newrelic/core/profile_sessions.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/core/profile_sessions.py	2014-10-13 14:53:58.043908871 +0000
+@@ -7,7 +7,7 @@
+ 
+ from collections import deque, defaultdict
+ 
+-import newrelic.packages.six as six
++import six
+ import newrelic
+ 
+ from newrelic.core.config import global_settings
+Index: python-newrelic/newrelic/core/stats_engine.py
+===================================================================
+--- python-newrelic.orig/newrelic/core/stats_engine.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/core/stats_engine.py	2014-10-13 14:53:58.043908871 +0000
+@@ -15,7 +15,7 @@
+ import time
+ import sys
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ from .error_collector import TracedError
+ from .internal_metrics import (internal_trace, InternalTrace, internal_metric)
+Index: python-newrelic/newrelic/hooks/component_piston.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/component_piston.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/component_piston.py	2014-10-13 14:53:58.043908871 +0000
+@@ -1,6 +1,6 @@
+ import types
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ import newrelic.api.transaction
+ import newrelic.api.function_trace
+Index: python-newrelic/newrelic/hooks/external_feedparser.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/external_feedparser.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/external_feedparser.py	2014-10-13 14:53:58.043908871 +0000
+@@ -1,7 +1,7 @@
+ import sys
+ import types
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ import newrelic.api.transaction
+ import newrelic.api.object_wrapper
+Index: python-newrelic/newrelic/hooks/external_urllib.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/external_urllib.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/external_urllib.py	2014-10-13 14:53:58.043908871 +0000
+@@ -3,7 +3,7 @@
+ except ImportError:
+     import urllib.parse as urlparse
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ from newrelic.agent import (current_transaction,
+     wrap_function_wrapper, ExternalTrace)
+Index: python-newrelic/newrelic/hooks/external_urllib2.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/external_urllib2.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/external_urllib2.py	2014-10-13 14:53:58.043908871 +0000
+@@ -3,7 +3,7 @@
+ except ImportError:
+     import urllib.parse as urlparse
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ from newrelic.agent import (current_transaction,
+     wrap_function_wrapper, ExternalTrace)
+Index: python-newrelic/newrelic/hooks/framework_webpy.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/framework_webpy.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/framework_webpy.py	2014-10-13 14:53:58.043908871 +0000
+@@ -1,6 +1,6 @@
+ import sys
+ 
+-import newrelic.packages.six as six
++import six
+ 
+ import newrelic.api.transaction
+ import newrelic.api.function_trace
+Index: python-newrelic/newrelic/admin/record_deploy.py
+===================================================================
+--- python-newrelic.orig/newrelic/admin/record_deploy.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/admin/record_deploy.py	2014-10-13 14:53:58.043908871 +0000
+@@ -8,7 +8,7 @@
+ from ..agent import initialize, global_settings
+ from ..network.addresses import proxy_details
+ 
+-from ..packages import requests
++import requests
+ 
+ @command('record-deploy', 'config_file description [revision changelog user]',
+ """Records a deployment for the monitored application.""")
+Index: python-newrelic/newrelic/api/profile_trace.py
+===================================================================
+--- python-newrelic.orig/newrelic/api/profile_trace.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/api/profile_trace.py	2014-10-13 14:53:58.043908871 +0000
+@@ -2,7 +2,7 @@
+ import sys
+ import os
+ 
+-from ..packages import six
++import six
+ 
+ from .transaction import current_transaction
+ from .function_trace import FunctionTrace
+Index: python-newrelic/newrelic/api/web_transaction.py
+===================================================================
+--- python-newrelic.orig/newrelic/api/web_transaction.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/api/web_transaction.py	2014-10-13 14:53:58.043908871 +0000
+@@ -21,7 +21,7 @@
+ from ..common.encoding_utils import (obfuscate, deobfuscate, json_encode,
+     json_decode)
+ 
+-from ..packages import six
++import six
+ 
+ _logger = logging.getLogger(__name__)
+ 
+Index: python-newrelic/newrelic/common/encoding_utils.py
+===================================================================
+--- python-newrelic.orig/newrelic/common/encoding_utils.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/common/encoding_utils.py	2014-10-13 14:53:58.043908871 +0000
+@@ -8,7 +8,7 @@
+ import json
+ import zlib
+ 
+-from ..packages import six
++import six
+ 
+ # Functions for encoding/decoding JSON. These wrappers are used in order
+ # to hide the differences between Python 2 and Python 3 implementations
+Index: python-newrelic/newrelic/common/object_names.py
+===================================================================
+--- python-newrelic.orig/newrelic/common/object_names.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/common/object_names.py	2014-10-13 14:53:58.043908871 +0000
+@@ -7,7 +7,7 @@
+ import inspect
+ import functools
+ 
+-from ..packages import six
++import six
+ 
+ # Object model terminology for quick reference.
+ #
+Index: python-newrelic/newrelic/common/object_wrapper.py
+===================================================================
+--- python-newrelic.orig/newrelic/common/object_wrapper.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/common/object_wrapper.py	2014-10-13 14:53:58.043908871 +0000
+@@ -9,13 +9,13 @@
+ import inspect
+ import functools
+ 
+-from ..packages import six
++import six
+ 
+-from ..packages.wrapt import (ObjectProxy as _ObjectProxy,
++from wrapt import (ObjectProxy as _ObjectProxy,
+         FunctionWrapper as _FunctionWrapper,
+         BoundFunctionWrapper as _BoundFunctionWrapper)
+ 
+-from ..packages.wrapt.wrappers import _FunctionWrapperBase
++from wrapt.wrappers import _FunctionWrapperBase
+ 
+ # We previously had our own pure Python implementation of the generic
+ # object wrapper but we now defer to using the wrapt module as its C
+Index: python-newrelic/newrelic/hooks/framework_django.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/framework_django.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/framework_django.py	2014-10-13 14:53:58.043908871 +0000
+@@ -3,7 +3,7 @@
+ import logging
+ import functools
+ 
+-from newrelic.packages import six
++import six
+ 
+ from newrelic.agent import (FunctionWrapper, callable_name,
+     wrap_error_trace, FunctionTrace, wrap_function_trace, wrap_in_function,
+Index: python-newrelic/newrelic/hooks/middleware_flask_compress.py
+===================================================================
+--- python-newrelic.orig/newrelic/hooks/middleware_flask_compress.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/hooks/middleware_flask_compress.py	2014-10-13 14:53:58.043908871 +0000
+@@ -3,7 +3,7 @@
+ from newrelic.agent import (current_transaction, extra_settings,
+     insert_html_snippet, wrap_function_wrapper)
+ 
+-from newrelic.packages import six
++import six
+ 
+ _logger = logging.getLogger(__name__)
+ 
+Index: python-newrelic/newrelic/network/platform_api.py
+===================================================================
+--- python-newrelic.orig/newrelic/network/platform_api.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/network/platform_api.py	2014-10-13 14:53:58.043908871 +0000
+@@ -5,10 +5,10 @@
+ import socket
+ import os
+ 
+-from ..packages import six
++import six
+ 
+-from ..packages import requests
+-from ..packages.requests import certs
++import requests
++from requests import certs
+ 
+ from .. import version as agent_version
+ 
+Index: python-newrelic/newrelic/common/log_file.py
+===================================================================
+--- python-newrelic.orig/newrelic/common/log_file.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/common/log_file.py	2014-10-13 14:53:58.047908873 +0000
+@@ -97,5 +97,5 @@
+         return False
+ 
+ _requests_logger = logging.getLogger(
+-    'newrelic.packages.requests.packages.urllib3.connectionpool')
++    'urllib3.connectionpool')
+ _requests_logger.addFilter(RequestsConnectionFilter())
+Index: python-newrelic/newrelic/platform.py
+===================================================================
+--- python-newrelic.orig/newrelic/platform.py	2014-10-13 14:39:32.615708420 +0000
++++ python-newrelic/newrelic/platform.py	2014-10-13 14:53:58.047908873 +0000
+@@ -358,7 +358,7 @@
+                 pass
+ 
+         _requests_logger = logging.getLogger(
+-            'newrelic.packages.requests.packages.urllib3.connectionpool')
++            'urllib3.connectionpool')
+         _requests_logger.addFilter(RequestsConnectionFilter())
+ 
+         logging.basicConfig(filename=log_file,

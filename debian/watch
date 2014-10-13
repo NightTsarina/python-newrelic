@@ -1,0 +1,4 @@
+version=3
+
+https://pypi.python.org/pypi/newrelic/ .*/newrelic-(.*)\.tar\.gz
+

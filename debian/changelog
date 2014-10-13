@@ -1,0 +1,5 @@
+python-newrelic (2.32.0.28-1) UNRELEASED; urgency=low
+
+  * Initial Debian packaging.
+
+ -- Martín Ferrari <tincho@debian.org>  Mon, 13 Oct 2014 11:44:33 +0000

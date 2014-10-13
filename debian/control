@@ -1,0 +1,14 @@
+Source: python-newrelic
+Maintainer: Martín Ferrari <tincho@debian.org>
+Section: non-free/python
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python-all-dev (>= 2.6.6-3),
+ debhelper (>= 9), dh-python, quilt
+Standards-Version: 3.9.5
+
+Package: python-newrelic
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
+ python-requests (>= 2), python-wrapt, python-six (>= 1.3)
+Description: Python agent for New Relic
+ Python agent for the New Relic web application performance monitoring service.
